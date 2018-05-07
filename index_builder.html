@@ -81,6 +81,10 @@ void loop(){
 
 			uploadFileForm.addEventListener('submit', handleSubmit, false);		
 
+			/**
+			* Function handleSubmit() will load a hex-file from the local PC
+			* and post it to the extension to flash the device
+			*/
 			function handleSubmit(e) {
 				e.preventDefault();
 
@@ -115,50 +119,14 @@ void loop(){
 			* This function will NOT flash the device.
 			*/
 			function verifytxt(){
-				var data = {
-					"files":[
-					  {
-						 "filename":"hello.ino",
-						 "content": $("#codeTextarea").val()
-					  }
-				   ],
-				   "libraries":{},
-				   "format":"syntax", // == syntax, for verification
-				   "version":"105",
-				   "build":{
-					  "mcu":"atmega328p",
-					  "f_cpu":"16000000L",
-					  "core":"arduino",
-					  "variant":"standard"
-				   }
-				};
-
 				$.post(compilerType.value, {'data': $("#codeTextarea").val(), 'boardName': boardType.value}, function(data){
 					console.log(data);
-				});
-
-				/*$.ajax({
-					url: compilerType.value,
-					type:"POST",
-					dataType:"json",
-					data: JSON.stringify(data),
-					success: function(data) {
-						lblStatus.innerHTML = "Status: finished compiling hex-file";
-						console.log("Success: Finished compiling hex-file");
-						console.log(data);
-						// get the message payload ready to send to the chrome app
-						if(data["success"] == true){
-							lblStatus.innerHTML = "Status: Code contains no errors!";
-							console.log("Verification returns true: code contains no errors");
-						} else {
-							lblStatus.innerHTML = "Status: Error in code, " + data["debug"];
-							console.log("Verification failed: error in code, " + data["debug"]);						
-						}
-					},
-					error: function(data){
-						console.log("Compile error or no connection with the compiler: " + data);	
+					if(data['err'] !== '') {
+						lblStatus.innerHTML = 'Status: ERROR! ' + data['err'];
+					} else {
+						lblStatus.innerHTML = 'Status: SUCCES! ' + data['out'];
 					}
-				});*/
+				});
 			}
 
 			/**
@@ -168,28 +136,13 @@ void loop(){
 			* 3. extension will flash a connected device
 			*/
 			function uploadtxt(){
-				var data = {
-					"files":[
-					  {
-						 "filename":"hello.ino",
-						 "content": $("#codeTextarea").val()
-					  }
-				   ],
-				   "libraries":{},
-				   "format":"hex",
-				   "version":"105",
-				   "build":{
-					  "mcu":"atmega328p",
-					  "f_cpu":"16000000L",
-					  "core":"arduino",
-					  "variant":"standard"
-				   }
-				};		
-
-				$.post(compilerType.value, {'data': $("#codeTextarea").val()}, function(data){
+				$.post(compilerType.value, {'data': $("#codeTextarea").val(), 'boardName': boardType.value}, function(data){
 					console.log(data);
-					// get the message payload ready to send to the chrome app
-					if(JSON.stringify(data['hex']) !== ""){
+					if(data['err'] !== '') {
+						lblStatus.innerHTML = 'Status: ERROR! ' + data['err'];
+					} else if(JSON.stringify(data['hex']) !== '') {
+						// get the message payload ready to send to the chrome app						
+						lblStatus.innerHTML = 'Status: SUCCES! ' + data['out'];
 						var message = {
 							board: boardType.value, 
 							file: data['hex']
@@ -203,37 +156,12 @@ void loop(){
 						lblStatus.innerHTML = "Compiler returned empty file - Device not flashed";
 					}
 				});
-
-				/*$.ajax({
-					url: compilerType.value,
-					type:"POST",
-					dataType:"json",
-					data: JSON.stringify(data),
-					success: function(data) {
-						lblStatus.innerHTML = "Status: finished compiling hex-file";
-						console.log("Success: Finished compiling hex-file");
-						console.log(data);
-						// get the message payload ready to send to the chrome app
-						if(JSON.stringify(data["output"]) !== "{}"){
-							var message = {
-								board: boardType.value, 
-								file: data["output"]
-							};
-							// post object to extension so that it will flash the file		
-							lblStatus.innerHTML = "Status: flashing to device";							
-							console.log("Flashing file to device");					
-							port.postMessage(message);
-						} else {
-							console.log("Compiler returned empty file - Device not flashed.");
-							lblStatus.innerHTML = "Compiler returned empty file - Device not flashed";
-						}	
-					},
-					error: function(data){
-						console.log("Compile error or no connection with the compiler: " + data);	
-					}
-				});*/
 			}
 
+			/*
+			* Function copyToClipboard() will copy all the code in the textbox
+			* to your clipboard for easy Copy-paste.
+			*/
 			function copyToClipboard(){
 				var textarea = document.getElementById("codeTextarea");
 				textarea.select();
