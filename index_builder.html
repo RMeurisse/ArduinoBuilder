@@ -24,9 +24,10 @@
 		</style>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js" type="text/javascript"></script>
 	</head>
-	<body>
+	<body onload="checkExtension()">
 		<div>
-			<a href="https://chrome.google.com/webstore/detail/allow-control-allow-origi/nlfbmbojpeacfghkpbjhddihlkkiljbi">Install chrome CORS extension here.</a>
+			<p id="lblExtension">Message: ...</p>
+			<button id="checkExtensionBtn" onclick="checkExtension()">Check if extension is installed/functioning</button>
 		</div>
 		<div>
 			<label>Arduino board:
@@ -75,11 +76,28 @@ void loop(){
 			var fileInput = document.getElementById('fileInput');
 			var boardType = document.getElementById('boardType');
 			var compilerType = document.getElementById('compilerType');
-			var verifyBtn = document.getElementById('verifyTxtBtn');
-			var uploadFileBtn = document.getElementById('uploadFileBtn');
+			//var verifyBtn = document.getElementById('verifyTxtBtn');
+			//var uploadFileBtn = document.getElementById('uploadFileBtn');
 			var lblStatus = document.getElementById('lblStatus');
+			var lblExtension = document.getElementById('lblExtension');
+			var extensionActive = false;
 
 			uploadFileForm.addEventListener('submit', handleSubmit, false);		
+
+			/**
+			* Function checkExtension will poll if the extension is installed or not
+			*/
+			function checkExtension() {			
+				chrome.runtime.sendMessage(extensionid, 'check', response => {
+					if(!response) {
+						lblExtension.innerHTML = 'No extension installed';
+						extensionActive = false;
+					} else {
+						lblExtension.innerHTML = JSON.stringify(response);
+						extensionActive = true;
+					}
+				});
+			}
 
 			/**
 			* Function handleSubmit() will load a hex-file from the local PC
@@ -102,6 +120,7 @@ void loop(){
 
 				  // get the message payload ready to send to the chrome app
 				  var message = {
+					flash: true,
 					board: board, 
 					file: filecontents
 				  };
@@ -136,26 +155,32 @@ void loop(){
 			* 3. extension will flash a connected device
 			*/
 			function uploadtxt(){
-				$.post(compilerType.value, {'data': $("#codeTextarea").val(), 'boardName': boardType.value}, function(data){
-					console.log(data);
-					if(data['err'] !== '') {
-						lblStatus.innerHTML = 'Status: ERROR! ' + data['err'];
-					} else if(JSON.stringify(data['hex']) !== '') {
-						// get the message payload ready to send to the chrome app						
-						lblStatus.innerHTML = 'Status: SUCCES! ' + data['out'];
-						var message = {
-							board: boardType.value, 
-							file: data['hex']
-						};
-						// post object to extension so that it will flash the file		
-						lblStatus.innerHTML = "Status: flashing to device";							
-						console.log("Flashing file to device");					
-						port.postMessage(message);
-					} else {
-						console.log("Compiler returned empty file - Device not flashed.");
-						lblStatus.innerHTML = "Compiler returned empty file - Device not flashed";
-					}
-				});
+				// First check if extension is installed.
+				if(!extensionActive) { 
+					lblStatus.innerHTML = 'Status: Extension not installed';
+				} else {
+					$.post(compilerType.value, {'data': $("#codeTextarea").val(), 'boardName': boardType.value}, function(data){
+						console.log(data);
+						if(data['err'] !== '') {
+							lblStatus.innerHTML = 'Status: ERROR! ' + data['err'];
+						} else if(JSON.stringify(data['hex']) !== '') {
+							// get the message payload ready to send to the chrome app						
+							lblStatus.innerHTML = 'Status: SUCCES! ' + data['out'];
+							var message = {
+								flash: true,
+								board: boardType.value, 
+								file: data['hex']
+							};
+							// post object to extension so that it will flash the file		
+							lblStatus.innerHTML = "Status: flashing to device";							
+							console.log("Flashing file to device");					
+							port.postMessage(message);
+						} else {
+							console.log("Compiler returned empty file - Device not flashed.");
+							lblStatus.innerHTML = "Compiler returned empty file - Device not flashed";
+						}
+					});
+				}
 			}
 
 			/*
@@ -177,13 +202,13 @@ void loop(){
 			}
 
 			// open long lived connection with extension (it takes time for flash to complete)
-			var extensionid = 'ehgnafnpgfnpmcgnggicfbnmhbbpphpl';
+			var extensionid = 'mdakeecljhpcnhpckfldneofndikedpl';
 			var port = chrome.runtime.connect(extensionid);
 
 			// log out any responses we get from the chrome app
 			port.onMessage.addListener(function(msg) {
-				console.log('extension is done:', msg);
-				lblStatus.innerHTML = 'extension is done: ' + msg;
+				console.log('Message from extension:', msg);
+				lblStatus.innerHTML = 'Message from extension: ' + JSON.stringify(msg);
 			});
 		</script>
 	</body>
