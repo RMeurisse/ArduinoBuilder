@@ -5,9 +5,11 @@ Compile/Build and return hex-file of requested code.
 Makes use of the Arduino-Builder project used by the Arduino IDE. 
 
 ### Running the project
-
- - Command: "(sudo) node server.js"
- - Go to: "http://localhost:7000/"
+ - Download or clone this directory
+ - run `npm install` in the current directory
+ - change 'config.js' to specify your local paths and variables
+ - run `(sudo) node server.js`
+ - Go to: `http://localhost:{Port}/`. With {Port} being the port specified in the config.js-file. 
  - Write your code in the textbox and verify/upload it directly to your board.
 
 ### Development
@@ -57,3 +59,6 @@ error messages if there are any.
 |Adafruit Feather 32u4 Basic Proto|`feather`|
 |Arduboy|`arduboy`|
 |Adafruit Circuit Playground|`circuit-playground-classic`|
+
+#### Chrome extension
+[TO DO: place link to extension in chromestore]
