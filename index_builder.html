@@ -24,7 +24,7 @@
 		</style>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js" type="text/javascript"></script>
 	</head>
-	<body onload="checkExtension()">
+	<body onload="checkExtension(), populatePorts()">
 		<div>
 			<p id="lblExtension">Message: ...</p>
 			<button id="checkExtensionBtn" onclick="checkExtension()">Check if extension is installed/functioning</button>
@@ -32,7 +32,7 @@
 		<div>
 			<label>Arduino board:
 				<select id="boardType">
-					<option value="arduino:avr:uno">Uno</option>
+					<option value='{"builder":"arduino:avr:uno","ext":"uno"}'>Uno</option>
 				</select>
 			</label>
 		</div>
@@ -65,6 +65,8 @@ void loop(){
 			<select id="compilerType">
 				<option value="http://localhost:7000/compile">Local arduino builder</option>
 			</select>
+			<select id="portType">		
+			</select>
 			<button id="verifyTxtBtn" onclick="verifytxt()">Verify Code</button>
 			<button id="uploadTxtBtn" onclick="uploadtxt()">Upload Code</button>
 			<button id="copyToClipboardBtn" onclick="copyToClipboard()">Copy to Clipboard</button>
@@ -76,6 +78,7 @@ void loop(){
 			var fileInput = document.getElementById('fileInput');
 			var boardType = document.getElementById('boardType');
 			var compilerType = document.getElementById('compilerType');
+			var portType = document.getElementById('portType');
 			//var verifyBtn = document.getElementById('verifyTxtBtn');
 			//var uploadFileBtn = document.getElementById('uploadFileBtn');
 			var lblStatus = document.getElementById('lblStatus');
@@ -93,8 +96,31 @@ void loop(){
 						lblExtension.innerHTML = 'No extension installed';
 						extensionActive = false;
 					} else {
-						lblExtension.innerHTML = JSON.stringify(response);
+						lblExtension.innerHTML = JSON.stringify(response); 
 						extensionActive = true;
+					}
+				});
+			}
+
+			/**
+			* Function populatePorts will add connected devices to the select box
+			*/
+			function populatePorts() {			
+				chrome.runtime.sendMessage(extensionid, 'ports', response => {
+					if(!response) {
+						lblExtension.innerHTML = 'No extension installed';
+					} else {
+						// empty select
+						portType.options.length = 0;
+						// populate list with response
+						var data = response['message'];
+						let option;
+						for (let i = 0; i < data.length; i++) {
+							option = document.createElement('option');
+							option.text = data[i].comName;
+							option.value = data[i].comName;
+							portType.add(option);
+						}
 					}
 				});
 			}
@@ -110,9 +136,6 @@ void loop(){
 				var file = fileInput.files[0];
 				var reader = new FileReader();
 
-				// get the requested board name
-				var board = boardType.value;
-
 				reader.onload = function(event) {
 
 				  // get the string text of the file
@@ -120,8 +143,8 @@ void loop(){
 
 				  // get the message payload ready to send to the chrome app
 				  var message = {
-					flash: true,
-					board: board, 
+					board: JSON.parse(boardType.value)['ext'], 
+					port: portType.value,
 					file: filecontents
 				  };
 
@@ -138,7 +161,7 @@ void loop(){
 			* This function will NOT flash the device.
 			*/
 			function verifytxt(){
-				$.post(compilerType.value, {'data': $("#codeTextarea").val(), 'boardName': boardType.value}, function(data){
+				$.post(compilerType.value, {'data': $("#codeTextarea").val(), 'boardName': JSON.parse(boardType.value)['builder']}, function(data){
 					console.log(data);
 					if(data['err'] !== '') {
 						lblStatus.innerHTML = 'Status: ERROR! ' + data['err'];
@@ -159,7 +182,7 @@ void loop(){
 				if(!extensionActive) { 
 					lblStatus.innerHTML = 'Status: Extension not installed';
 				} else {
-					$.post(compilerType.value, {'data': $("#codeTextarea").val(), 'boardName': boardType.value}, function(data){
+					$.post(compilerType.value, {'data': $("#codeTextarea").val(), 'boardName': JSON.parse(boardType.value)['builder']}, function(data){
 						console.log(data);
 						if(data['err'] !== '') {
 							lblStatus.innerHTML = 'Status: ERROR! ' + data['err'];
@@ -167,8 +190,8 @@ void loop(){
 							// get the message payload ready to send to the chrome app						
 							lblStatus.innerHTML = 'Status: SUCCES! ' + data['out'];
 							var message = {
-								flash: true,
-								board: boardType.value, 
+								board: JSON.parse(boardType.value)['ext'], 
+								port: portType.value,
 								file: data['hex']
 							};
 							// post object to extension so that it will flash the file		
