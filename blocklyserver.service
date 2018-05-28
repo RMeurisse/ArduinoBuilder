@@ -16,6 +16,9 @@ StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=blocklyserver #Name of the service
 
+#User=<alternate user>
+#Group=<alternate group>
+
 Environment=NODE_ENV=production 
 
 [Install]
