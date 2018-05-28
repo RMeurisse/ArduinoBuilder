@@ -11,14 +11,14 @@ This project uses the arduino-builder tool used by the Arduino IDE.
 
 ### Setting up the server
  - Download or clone following GitHub-directory: https://github.com/RMeurisse/ArduinoBuilder;
- - `cd` to downloaded directory;
- - Run `(sudo) npm install` in the current directory. This will install all dependencies specified in the manifest.json-file;
+ - ```cd``` to downloaded directory;
+ - Run ```(sudo) npm install``` in the current directory. This will install all dependencies specified in the manifest.json-file;
  - Change the file 'config.js' to specify your local paths and variables:
  	- Local './arduino-directory': this directory will contain the extra libraries you downloaded with the Arduino IDE;
 	- Local './arduino-1.8.5-directory': this directory contains all the files used by the arduino-builder tool;
 	- Local 'temporary'-directory: this is the directory where the arduino-builder tool will store it's temporary files, this can be a directory you created or you can use the '/tmp'-directory of Linux/Ubuntu.
- - Run `(sudo) node server.js`;
- - Go to: `http://localhost:{Port}/`. With {Port} being the port specified in the 'config.js'-file;
+ - Run ```(sudo) node server.js```;
+ - Go to: ```http://localhost:{Port}/```. With {Port} being the port specified in the 'config.js'-file;
  - Write your code in the textbox and verify your code or upload it directly to a connected Arduino board;
  - (To automatically start the server at start-up, see next section).
  
@@ -29,12 +29,12 @@ This project uses the arduino-builder tool used by the Arduino IDE.
 	ExecStart=[PATH TO SERVER.JS FILE]
 	```
  - This service-file will execute the server at startup or restart the server automatically if it crashes;
- - Before continuing: make sure the first line of the server.js-file contains the following: `#!/usr/bin/env node`. This command will make sure the system knows that file needs to be executed with node. Also make sure the server.js-file is executable by doing the following: `(sudo) chmod +x [PATH TO SERVER.JS FILE]`; 
- - Copy or move this file to the startup-directory. For linux: `(sudo) cp [PATH TO SERVICE FILE] /etc/systemd/system/`;
- - Enable the service: `systemctl enable blocklyserver.service`;
- - Start the service: `systemctl start blocklyserver.service`;
- - Verify it's running: `systemctl status blocklyserver.service`;
- - If there are problems, you can check the errors in the log: `less /var/log/syslog` or messages with `journalctl -u blocklyserver.service`.
+ - Before continuing: make sure the first line of the server.js-file contains the following: ```#!/usr/bin/env node```. This command will make sure the system knows that file needs to be executed with node. Also make sure the server.js-file is executable by doing the following: ```(sudo) chmod +x [PATH TO SERVER.JS FILE]```; 
+ - Copy or move this file to the startup-directory. For linux: ```(sudo) cp [PATH TO SERVICE FILE] /etc/systemd/system/```;
+ - Enable the service: ```systemctl enable blocklyserver.service```;
+ - Start the service: ```systemctl start blocklyserver.service```;
+ - Verify it's running: ```systemctl status blocklyserver.service```;
+ - If there are problems, you can check the errors in the log: ```less /var/log/syslog``` or messages with ```journalctl -u blocklyserver.service```.
  
 Optional: The above steps will run the service as root. If you want to run the server from a specific user only, follow the steps below;
  - Change the following lines to specify the user:
@@ -42,9 +42,9 @@ Optional: The above steps will run the service as root. If you want to run the s
 	User=[USERNAME]
 	Group=[YOUR GROUP]
 	```
- - After making changes to the service file, reload it: `systemctl daemon-reload`;
- - Restart the service: `systemctl restart blocklyserver.service`;
- - Check status with: `systemctl status blocklyserver.service`.
+ - After making changes to the service file, reload it: ```systemctl daemon-reload```;
+ - Restart the service: ```systemctl restart blocklyserver.service```;
+ - Check status with: ```systemctl status blocklyserver.service```.
  
 ### Development
 If you want to integrate the given index.html page into your own website.
