@@ -37,17 +37,24 @@ This project uses the arduino-builder tool used by the Arduino IDE.
  - If there are problems, you can check the errors in the log: `less /var/log/syslog` or messages with `journalctl -u blocklyserver.service`.
  
 Optional: The above steps will run the service as root. If you want to run the server from a specific user only, follow the steps below;
+ - Change the following lines to specify the user:
+ 	```
+	User=[USERNAME]
+	Group=[YOUR GROUP]
+	```
  - After making changes to the service file, reload it: `systemctl daemon-reload`;
  - Restart the service: `systemctl restart blocklyserver.service`;
  - Check status with: `systemctl status blocklyserver.service`.
  
 ### Development
+If you want to integrate the given index.html page into your own website.
+
 #### POST request to server
 Your website should send a HTTP POST-request with JSON-data of the following format:
 ```JSON-data of request message
 {
 	'data': 'void setup(){} void loop(){}',
-	'boardName': 'uno'
+	'boardName': 'arduino:avr:uno'
 }
 ```
 The 'data'-property should contain your program (text written in the textbox) and the 'boardName'-property should contain
@@ -67,24 +74,91 @@ The 'out'-property contains all the console messages of the compiler while the '
 error messages if there was an error, otherwise this will be empty.
 
 #### Accepted board-types/names
-|Programmer|Board Option String|
-|:----------|:--------------|
-|Arduino Uno|`uno`|
-|Arduino Mega|`mega`|
-|Arduino ADK|`adk`|
-|Arduino Leonardo|`leonardo`|
-|Arduino Micro|`micro`|
-|Arduino Nano|`nano`|
-|Arduino Lilypad USB|`lilypad-usb`|
-|Arduino Duemilanove|`duemilanove168`|
-|Arduino Yun|`yun`|
-|Arduino Esplora|`esplora`|
-|RedBearLab Blend Micro|`blend-micro`|
-|Tiny Circuits Tinyduino|`tinyduino`|
-|SparkFun Pro Micro|`sf-pro-micro`|
-|Qtechknow Qduino|`qduino`|
-|Pinoccio Scout|`pinoccio`|
-|Femtoduino IMUduino|`imuduino`|
-|Adafruit Feather 32u4 Basic Proto|`feather`|
-|Arduboy|`arduboy`|
-|Adafruit Circuit Playground|`circuit-playground-classic`|
+The following table displays the board string parameters for the POST-request to the server. The last column is the name for the board that the extension requires. The board string is different for the builder from the extension.
+Only the standard board strings are given for the arduino-builder. If you want to add other boards, use the Arduino IDE to include them. When you verify a program, the console outputs the commands used, search for the option `-fqbn [arduino:avr:...]`. This option is the one you will have to include in your website.
+
+|Programmer|Arduino-builder Board String | Extension Board String|
+|:----------|:--------------|:--------------------|
+|Arduino Uno|`arduino:avr:uno`|`uno`|
+|Arduino Mega 1280|`arduino:avr:mega:cpu=atmega1280`|`mega`|
+|Arduino Mega 2560|`arduino:avr:mega:cpu=atmega2560`|`mega`|
+|Arduino ADK|`arduino:avr:megaAdk`|`adk`|
+|Arduino Leonardo|`arduino:avr:leonardo`|`leonardo`|
+|Arduino Micro|`arduino:avr:micro`|`micro`|
+|Arduino Nano 328|`arduino:avr:nano:cpu=atmega328`|`nano`|
+|Arduino Lilypad USB|`arduino:avr:lilypad-usb`|`lilypad-usb`|
+|Arduino Duemilanove|`arduino:avr:diecimila:cpu=atmega168`|`duemilanove168`|
+|Arduino Yun|`arduino:avr:yun`|`yun`|
+|Arduino Esplora|`arduino:avr:esplora`|`esplora`|
+|RedBearLab Blend Micro|``|`blend-micro`|
+|Tiny Circuits Tinyduino|``|`tinyduino`|
+|SparkFun Pro Micro|`arduino:avr:pro:cpu=16MHzatmega328`|`sf-pro-micro`|
+|Qtechknow Qduino|``|`qduino`|
+|Pinoccio Scout|``|`pinoccio`|
+|Femtoduino IMUduino|``|`imuduino`|
+|Adafruit Feather 32u4 Basic Proto|``|`feather`|
+|Arduboy|``|`arduboy`|
+|Adafruit Circuit Playground|`arduino:avr:circuitplay32u4cat`|`circuit-playground-classic`|
+
+### Functions used by the webpage
+The webpage uses several functions to compile the given code and flash the hardware through the extension.
+
+```
+/**
+ * Function checkExtension will poll if the extension is installed or not.
+ * The function uses short-lived connections with the extension to do this (chrome.runtime.sendMessage()).
+ * Steps:
+ *	1. Send message to extension with option 'check';
+ *	2. Extension will respond if installed, otherwise chrome.runtime.sendMessage() will return false.
+ */
+function checkExtension()
+```
+
+```
+/**
+ * Function populatePorts will add connected devices to the select box.
+ * Steps:
+ * 	1. Send message to extension with option 'ports';
+ *	2. Extension will retrieve all ports that have hardware connected;
+ * 	3. Extension sends message back containing JSON-data with the list of ports;
+ *	4. This function will populate the drop-down list with the returned ports.
+ */
+function populatePorts()
+```
+
+```
+/**
+ * Function handleSubmit() will load a hex-file from the local PC
+ * and post it to the extension to flash the device.
+ * Steps:
+ *	1. Open filesystem so the user can select a .hex-file;
+ *	2. Make JSON-Ojbect containing the contents of the selected file, the Arduino board name and the selected port;
+ *	3. Send the object to the extension with a port-object (port.postMessage() is a long-lived connection because it can take some time);
+ *	4. Extension will respond if the flashing was succesful.
+ */
+function handleSubmit()
+```
+
+```
+/**
+ * Function verifytxt() will return whether or not the code is compilable.
+ * This function will NOT flash the device.
+ * Steps:
+ *	1. Makes a HTTP POST-request to the specified compiler with the code from the textbox;
+ *	2. Compiler sends a message back with success or error;
+ *	3. Display the returned error.
+ */
+function verifytxt()
+```
+
+```
+/**
+ * Function uploadtxt() will flash the code in the textbox to the connected device
+ * Steps:
+ *	1. HTTP POST-request to compile the code and to receive the hex-file;
+ * 	2. Send received hex-file to the extension;
+ * 	3. Extension will flash a connected device;
+ *	4. Extension will return success if flashing was succesful.
+ */
+function uploadtxt()
+```
