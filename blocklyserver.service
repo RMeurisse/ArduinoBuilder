@@ -1,0 +1,22 @@
+[Unit]
+# Description of the service
+Description=Node.js Blockly4Arduino Server
+
+[Service]
+# Main file to execute at startup --> server.js
+ExecStart=/home/robin/zzzArduinoBuilder/server.js
+
+# Restart the server on crash/startup
+Restart=always
+# Restart service after 10 seconds if node service crashes
+RestartSec=10
+
+# Output to syslog, 'less /var/log/syslog' to view the output
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=blocklyserver #Name of the service
+
+Environment=NODE_ENV=production 
+
+[Install]
+WantedBy=multi-user.target
