@@ -23,8 +23,24 @@ This project uses the arduino-builder tool used by the Arduino IDE.
  - (To automatically start the server at start-up, see next section).
  
 ### Automatic start server at start-up of the system
-[TO DO]
-
+ - In the downloaded directory, find the file 'blocklyserver.service';
+ - Edit the following line in the 'blocklyserver.service'-file to refer to the location of the server.js-file:
+ 	```blocklyserver.service  
+	ExecStart=[PATH TO SERVER.JS FILE]
+	```
+ - This service-file will execute the server at startup or restart the server automatically if it crashes;
+ - Before continuing: make sure the first line of the server.js-file contains the following: `#!/usr/bin/env node`. This command will make sure the system knows that file needs to be executed with node. Also make sure the server.js-file is executable by doing the following: `(sudo) chmod +x [PATH TO SERVER.JS FILE]`; 
+ - Copy or move this file to the startup-directory. For linux: `(sudo) cp [PATH TO SERVICE FILE] /etc/systemd/system/`;
+ - Enable the service: `systemctl enable blocklyserver.service`;
+ - Start the service: `systemctl start blocklyserver.service`;
+ - Verify it's running: `systemctl status blocklyserver.service`;
+ - If there are problems, you can check the errors in the log: `less /var/log/syslog` or messages with `journalctl -u blocklyserver.service`.
+ 
+Optional: The above steps will run the service as root. If you want to run the server from a specific user only, follow the steps below;
+ - After making changes to the service file, reload it: `systemctl daemon-reload`;
+ - Restart the service: `systemctl restart blocklyserver.service`;
+ - Check status with: `systemctl status blocklyserver.service`.
+ 
 ### Development
 #### POST request to server
 Your website should send a HTTP POST-request with JSON-data of the following format:
